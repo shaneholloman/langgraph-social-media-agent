@@ -90,7 +90,12 @@ async function langchainDependencyReposLoaderFunc(
 
   const [newRepos, popularRepos, deepagentsRepos] = await Promise.all([
     searchRepos(octokit, newRepoQueries, new Set(seen), LIMITS.newRepos),
-    searchRepos(octokit, popularRepoQueries, new Set(seen), LIMITS.popularRepos),
+    searchRepos(
+      octokit,
+      popularRepoQueries,
+      new Set(seen),
+      LIMITS.popularRepos,
+    ),
     searchRepos(octokit, deepagentsQueries, new Set(seen), LIMITS.deepagents),
   ]);
 
