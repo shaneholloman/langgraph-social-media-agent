@@ -41,14 +41,18 @@ export async function verifyGitHubWrapper(
       results.pageContents &&
       results.pageContents.length > 0
     ) {
-      const stargazersCount = await fetchStargazersCount(repoURL);
       verifiedRepoData.push({
         repoURL,
         pageContent: results.pageContents[0],
-        stargazersCount,
       });
     }
   }
+
+  await Promise.all(
+    verifiedRepoData.map(async (d) => {
+      d.stargazersCount = await fetchStargazersCount(d.repoURL);
+    }),
+  );
 
   return {
     githubTrendingData: verifiedRepoData,
