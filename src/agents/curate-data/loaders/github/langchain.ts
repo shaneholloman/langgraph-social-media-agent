@@ -39,6 +39,15 @@ const PY_PATH_QUERY_PYPROJECT = "filename:pyproject.toml";
 
 const NOT_LANGCHAIN_ORG_QUERY = "NOT org:langchain-ai";
 
+const MAX_REPO_AGE_DAYS = 30;
+
+function isRepoRecentEnough(pushedAt: string | undefined | null): boolean {
+  if (!pushedAt) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - MAX_REPO_AGE_DAYS);
+  return new Date(pushedAt) >= cutoff;
+}
+
 const FULL_PY_QUERY = `${PY_PATH_QUERY_REQUIREMENTS} OR ${PY_PATH_QUERY_PYPROJECT} ${NOT_LANGCHAIN_ORG_QUERY}`;
 const FULL_JS_QUERY = `${JS_LANGCHAIN_PACKAGES.join(" OR ")} ${JS_PATH_QUERY} ${NOT_LANGCHAIN_ORG_QUERY}`;
 
@@ -172,6 +181,10 @@ async function langchainDependencyReposLoaderFunc(
             }
           }
 
+          if (!isRepoRecentEnough(repo.repository.pushed_at)) {
+            continue;
+          }
+
           const hasDeps = await checkPythonDependencies(
             octokit,
             repo.repository.owner.login,
@@ -243,6 +256,10 @@ async function langchainDependencyReposLoaderFunc(
             } else {
               break;
             }
+          }
+
+          if (!isRepoRecentEnough(repo.repository.pushed_at)) {
+            continue;
           }
 
           const hasDeps = await checkJSDependencies(
