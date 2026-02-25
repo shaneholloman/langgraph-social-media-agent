@@ -2,6 +2,23 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { CurateDataState } from "../state.js";
 import { GitHubTrendingData } from "../types.js";
 import { verifyGitHubContent } from "../../shared/nodes/verify-github.js";
+import { getOwnerRepoFromUrl } from "../../../utils/github-repo-contents.js";
+
+async function fetchStargazersCount(repoURL: string): Promise<number> {
+  try {
+    const { owner, repo } = getOwnerRepoFromUrl(repoURL);
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: process.env.GITHUB_TOKEN
+        ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+        : {},
+    });
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return data.stargazers_count ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 export async function verifyGitHubWrapper(
   state: CurateDataState,
@@ -24,9 +41,11 @@ export async function verifyGitHubWrapper(
       results.pageContents &&
       results.pageContents.length > 0
     ) {
+      const stargazersCount = await fetchStargazersCount(repoURL);
       verifiedRepoData.push({
         repoURL,
-        pageContent: results.pageContents[0], // Take first page content, as there should only be one
+        pageContent: results.pageContents[0],
+        stargazersCount,
       });
     }
   }
